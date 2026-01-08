@@ -1,213 +1,191 @@
-# DriveMate System
+# DriveMate Booking System
 
-DriveMate là hệ thống đa nền tảng phục vụ quản lý/điều phối hoạt động liên quan đến học lái/đặt lịch/nguồn lực, gồm:
+DriveMate is a platform designed to support B2-licensed drivers who lack confidence behind the wheel by connecting them with verified driving instructors. The goal is to provide a safe, flexible, and reassuring environment where users can regain control and comfort on the road.
+# Document : https://docs.google.com/document/d/1vjmFpkk16MsVsv6w1VbaJidujTV07u7i/edit
+# Key Features
+- Supervised driving session booking system
+- Live tracking and session logging
+- Booking history and schedule management
 
-- **Backend**: Microservices trên **ASP.NET Core (.NET 8)** + **API Gateway (Ocelot)**
-- **WebApp**: **Next.js 15** (React 19, TypeScript, TailwindCSS)
-- **Mobile**: **Expo / React Native** (TypeScript, Redux Toolkit, SignalR)
+# Actors
 
-## Repository Structure
+- Novice Driver:Register/manage account; upload B2 license for verification; book/reschedule/cancel driving sessions; track instructor vehicle in real time; make payments (VNPay, ZaloPay, PayOS); chat with instructor; receive notifications; view learning progress, session history, and payment history; rate and review instructors.
 
-```text
-Project/
-├── backend/                 # .NET 8 microservices + docker-compose
-├── webapp/                  # Next.js web application
-└── moblie/                  # Expo / React Native application
-```
+- Instructor: Register and verify instructor credentials; update profile and availability; manage training schedules; track novice driver location and routes; conduct and confirm driving sessions with notes; view feedback; chat with novice drivers.
 
-## Tech Stack
+- Inspector: Review and verify instructor profiles and documents; approve or reject instructor applications; monitor instructor compliance; view reports and dashboard.
 
-- **Backend**: .NET 8, Ocelot, Swagger, JWT, EF Core, Hangfire, SignalR
-- **Database**: PostgreSQL
-- **Messaging**: RabbitMQ (CloudAMQP)
-- **WebApp**: Next.js 15, React 19, TypeScript, TailwindCSS
-- **Mobile**: Expo, React Native, TypeScript, Redux Toolkit, Axios, SignalR
+- Admin: Manage user accounts, roles, and permissions; oversee system-wide operations; view reports and analytics.
 
-## Prerequisites
+# System Context Diagram
 
-- **Docker Desktop** (khuyến nghị để chạy backend nhanh)
-- **.NET SDK 8** (nếu chạy backend local)
-- **Node.js 18+** (khuyến nghị **20+**) + npm
+The context diagram below illustrates the interaction between the external actors and the system.
 
-## Services & Ports
+![Context Diagram](assets/ContextDiagram.png)
 
-### Docker Compose (khuyến nghị)
 
-| Component | Container Port | Host Port |
-|---|---:|---:|
-| API Gateway | 80 | **8080** |
-| User Service | 80 | **8081** |
-| Booking Service | 80 | **8082** |
-| Resource Service | 80 | **8083** |
-| Payment Service | 80 | **8084** |
-| PostgreSQL | 5432 | **5432** |
+# Use Case Diagram
+The diagram demonstrates the core use cases of the system and the interactions between actors (such as users, instructors, inspectors, and administrators) and the system. It helps identify system requirements and user responsibilities at a functional level.
 
-### Local Development (dotnet run)
+![Use Case Diagram](assets/UseCase.png)
 
-| Service | Local URL |
-|---|---|
-| API Gateway | `http://localhost:5000` |
-| User Service | `http://localhost:5100` |
-| Booking Service | `http://localhost:5200` |
-| Payment Service | `http://localhost:5300` |
-| Resource Service | `http://localhost:5400` |
-| Messaging Service | `http://localhost:5500` |
 
-## Quickstart (Docker)
+# 🏗️ System Architecture
+The system is designed following a microservices architecture using .NET, ensuring scalability, flexibility, and ease of maintenance. Each core business function is implemented as an independent service, communicating through well-defined APIs.
 
-### 1) Start Backend
+![System Architecture](assets/SystemArchitecture.png)
 
-Chạy toàn bộ backend + database:
+This system is built using a .NET Microservices Architecture, designed for scalability, modularity, and seamless integration with third-party services.
 
-```bash
-# từ thư mục backend/
-docker compose up --build
-```
+1️⃣ Overall Architecture
 
-- API Gateway: `http://localhost:8080`
-- Gateway Swagger UI: `http://localhost:8080/swagger`
+The system is organized into the following core layers:
 
-### 2) Start WebApp
+- **Client Layer**: Web and Mobile applications for Novice Drivers, Instructors, Inspectors, and Admins.
 
-```bash
-# từ thư mục webapp/
-npm install
-npm run dev
-```
+- **API Gateway**: A single entry point that handles request routing, authentication, authorization, and aggregation.
 
-Mặc định WebApp chạy ở: `http://localhost:3000`
+- **Microservices Layer**: Independent ASP.NET Core services, each responsible for a specific business domain.
 
-### 3) Start Mobile
+- **Integration Layer**: Manages communication with external services such as payment gateways, maps, AI, and email providers.
 
-```bash
-# từ thư mục moblie/
-npm install
-npm start
-```
+- **Data Layer**: PostgreSQL databases for reliable and persistent data storage.
 
-## Environment Variables
+- **Cloud & Infrastructure Layer**: Supports deployment, cloud storage, logging, monitoring, and system scalability.
 
-> Lưu ý: các file `.env` trong repo hiện đang được `.gitignore` nên README này mô tả **danh sách biến môi trường cần có**. Hãy tạo `.env` theo nhu cầu môi trường của bạn.
+# 2️⃣ Microservices Design (.NET)
 
-### WebApp (`webapp/.env`)
+Each microservice is developed with ASP.NET Core, deployed independently, and can scale based on workload.
 
-Các biến đang được sử dụng trong code:
+Key services include:
 
-```env
-# Base URL của API Gateway
-NEXT_PUBLIC_BASE_URL=http://localhost:8080
+- **User Service**: Handles authentication, authorization, and role-based access control.
 
-# FPT AI (On-boarding/Identification)
-NEXT_PUBLIC_FPT_AI_ID_API_URL=<url>
-NEXT_PUBLIC_FPT_AI_DLC_API_URL=<url>
-NEXT_PUBLIC_FPT_AI_API_KEY=<api_key>
-```
+- **Booking Service**: Manages driving session booking, rescheduling, and cancellation.
 
-### Mobile (`moblie/.env`)
+- **Resource Service**: Controls instructor profiles, availability, and session confirmations.
 
-Các biến đang được sử dụng trong code:
+- **Payment Service**: Processes payments, refunds, and transaction history.
 
-```env
-# Base URL của API Gateway
-EXPO_PUBLIC_API_URL=http://localhost:8080
+- **Message Service**: Provides real-time notifications and in-app messaging.
 
-# Axios timeout (ms)
-EXPO_PUBLIC_API_TIMEOUT=15000
+3️⃣ Third-Party Integrations
 
-# Key dùng để lưu token trong AsyncStorage
-EXPO_PUBLIC_STORAGE_TOKEN=@token
+The system integrates with trusted third-party services to extend functionality:
 
-# WebApp URL (mở trong WebView / linking)
-EXPO_PUBLIC_URL_WEBAPP=http://localhost:3000
+- **FPT AI**: Enables intelligent features such as chatbot interaction and AI-assisted user support.
 
-# SignalR base url (Messaging service)
-# Ví dụ local: http://localhost:5500
-EXPO_PUBLIC_URL_HUB=http://localhost:5500
+- **Goong Map**: Supports real-time location tracking, route planning, and map visualization.
 
-# Maps (Goong)
-EXPO_PUBLIC_GOONG_API_KEY=<goong_api_key>
+- **Payment Gateways**: *VNPay*, *ZaloPay*, *PayOS*
 
-# FPT AI (OCR / license)
-EXPO_PUBLIC_FPT_AI_ID_API_URL=<url>
-EXPO_PUBLIC_FPT_AI_DLC_API_URL=<url>
-EXPO_PUBLIC_FPT_AI_API_KEY=<api_key>
-```
 
-### Backend (`backend/.env`)
+Secure APIs are used for payment processing, refunds, and transaction validation.
 
-Backend dùng `DotNetEnv.Env.Load("../../.env")` trong các service (xem `backend/src/*/Program.cs`).
+- **Gmail (SMTP / API)**
+Sends system emails including account verification, booking confirmations, and payment notifications.
 
-Tối thiểu bạn cần cấu hình các nhóm sau (tuỳ cách chạy):
+- **Cloudinary**
+Provides cloud-based storage for user images and document verification files.
 
-- **JWT**: `Jwt:Key`, `Jwt:Issuer`, `Jwt:Audience`
-- **Database connection strings** (PostgreSQL)
-- **RabbitMQ** (Booking/Payment service)
-- **Third-party**: SpeedSMS, Cloudinary, Payment providers (nếu có)
+4️⃣ Database Layer
 
-Khi chạy bằng Docker Compose, các biến môi trường chính đã được khai báo trực tiếp trong `backend/docker-compose.yml`.
+- PostgreSQL is used as the primary relational database.
 
-> Khuyến nghị: không commit secret vào git. Dùng `.env` local hoặc Secrets của CI/CD.
+- Each microservice may use its own database or schema to ensure loose coupling and data isolation.
 
-## Backend: API Gateway Routes
+- Stores user information, booking data, payment transactions, instructor verification records, and system logs.
 
-API Gateway (Ocelot) map upstream paths (client gọi) sang downstream services.
+5️⃣ Security & Communication
 
-Ví dụ:
+- Inter-service and client communication use RESTful APIs over HTTPS.
 
-- `GET/POST ... /auth/*` -> User Service `/api/auth/*`
-- `... /booking/*` -> Booking Service `/api/booking/*`
-- `... /payment/*` -> Payment Service `/api/payment/*`
-- `... /resource/*` -> Resource Service `/api/resource/*`
-- `... /chat/*`, `... /notifications/*` -> Messaging Service
+- JWT-based authentication secures access to system resources.
 
-Chi tiết xem:
+- Role-based authorization ensures users can only access permitted features.
 
-- `backend/src/ApiGateway/ocelot.json`
-- `backend/src/ApiGateway/ocelot.Development.json`
+- Sensitive configurations and third-party credentials are managed via environment variables or secret managers.
 
-## Development Notes
+✅ Architecture Benefits
 
-- **Swagger**
-  - Microservices expose swagger: `http://localhost:<service-port>/swagger`
-  - Gateway aggregates swagger via `SwaggerForOcelot`.
-- **SignalR (Mobile)**
-  - Hubs:
-    - `CHAT`: `/chatHub`
-    - `NOTIFICATION`: `/notificationHub`
-  - Base URL được lấy từ `EXPO_PUBLIC_URL_HUB`.
+- High scalability and independent service deployment
+- Improved maintainability and fault isolation
+- Easy integration with external services
+- Secure and robust system design
 
-## Scripts
 
-### WebApp
+## 🧰 Technologies
 
-```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
-```
+The project is built using a modern and scalable technology stack, designed to support a microservices architecture, cross-platform development, and real-time communication.
 
-### Mobile
+- **Backend**  
+  Microservices built with **ASP.NET Core (.NET 8)** and **Ocelot API Gateway** for routing, authentication, and request aggregation.
 
-```bash
-npm start
-npm run android
-npm run ios
-npm run web
-npm test
-```
+- **Web Application**  
+  Developed using **Next.js 15**, **React 19**, **TypeScript**, and **TailwindCSS** to deliver a high-performance and responsive user interface.
 
-## Documentation
-
-- Backend package diagram: `backend/src/PACKAGE_DIAGRAM.md`
-- Mobile architecture: `moblie/README.md`
-
-## Contributing
-
-- Tạo branch theo convention: `feature/*`, `fix/*`
-- Commit message rõ ràng
-- Không commit secrets (`.env`, access tokens, API keys)
+- **Mobile Application**  
+  Built with **Expo / React Native**, leveraging **TypeScript**, **Redux Toolkit**, and **SignalR** for real-time features.
 
 ---
 
-If you run into issues setting up environment variables (especially `.env` being ignored), tell me bạn đang chạy theo **Docker** hay **Local**, mình sẽ giúp map chính xác config cần thiết cho từng module.
+## 📁 Project Structure
+
+```text
+Project/
+├── backend/                 # .NET 8 microservices, API Gateway, Docker setup
+│   ├── gateway/             # Ocelot API Gateway
+│   ├── services/            # Independent microservices
+│   └── docker-compose.yml   # Local development orchestration
+├── webapp/                  # Next.js 15 web application
+└── mobile/                  # Expo / React Native mobile application
+## ⚙️ Tech Stack
+
+### Backend
+- **.NET 8 (ASP.NET Core)**
+- **Ocelot API Gateway**
+- **Entity Framework Core**
+- **JWT Authentication**
+- **Swagger / OpenAPI**
+- **Hangfire**
+- **SignalR**
+
+### Database
+- **PostgreSQL**
+
+### Messaging & Integration
+- **RabbitMQ (CloudAMQP)**
+
+### Web Application
+- **Next.js 15**
+- **React 19**
+- **TypeScript**
+- **TailwindCSS**
+
+### Mobile Application
+- **Expo / React Native**
+- **TypeScript**
+- **Redux Toolkit**
+- **Axios**
+- **SignalR**
+
+---
+
+## ✅ Key Technical Advantages
+
+- Microservices-based architecture with independent scalability
+- Clear separation between backend, web, and mobile layers
+- Real-time communication support across platforms
+- Modern, type-safe development stack
+
+
+
+
+
+
+
+
+
+
+
+
